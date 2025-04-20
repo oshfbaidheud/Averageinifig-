@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout - Lego Order</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 0;
+    }
+    .checkout-container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .checkout-header h2 {
+      margin: 0;
+    }
+    .form-section {
+      margin-top: 20px;
+      border: none;
+    }
+    .form-section legend {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+    }
+    .submit-btn {
+      background: linear-gradient(135deg, #ff9900, #cc6600);
+      color: #fff;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .submit-btn.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .submit-btn.success {
+      background: #28a745;
+    }
+    .copy-payment {
+      background: #f0f0f0;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      transition: all 0.2s ease;
+    }
+    .copy-payment:hover {
+      background: #ffe9c4;
+    }
+    .payment-copy-hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+    .item-code-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .item-code-box input {
+      flex: 1;
+      margin-right: 10px;
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .loading-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: #ff9900;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    .loading-text {
+      color: white;
+      font-size: 18px;
+      margin-top: 15px;
+    }
+    
+    /* Thank You Modal */
+    .thank-you-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 1001;
+    }
+    .thank-you-modal.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      pointer-events: all;
+    }
+    .thank-you-icon {
+      font-size: 60px;
+      color: #28a745;
+      margin-bottom: 20px;
+    }
+    .thank-you-btn {
+      background: #ff9900;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .thank-you-btn:hover {
+      background: #e68a00;
+    }
+    
+    /* Phone number input styling */
+    .phone-input-container {
+      display: flex;
+      align-items: center;
+    }
+    .phone-prefix {
+      padding: 10px;
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 6px 0 0 6px;
+      font-size: 14px;
+    }
+    .phone-input {
+      flex: 1;
+      border-radius: 0 6px 6px 0 !important;
+      border-left: none !important;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="checkout-container">
+  <div class="checkout-header">
+    <h2>🛒 Lego Custom Order</h2>
+    <p>Fill in your details to complete your purchase</p>
+  </div>
+
+  <form id="orderForm">
+    <!-- User Info -->
+    <fieldset class="form-section">
+      <legend>👤 Your Information</legend>
+      <div class="form-group">
+        <label for="customer-name">Full Name*</label>
+        <input type="text" id="customer-name" required />
+      </div>
+      <div class="form-group">
+        <label for="customer-phone">Phone Number*</label>
+        <div class="phone-input-container">
+          <span class="phone-prefix">+95</span>
+          <input type="tel" id="customer-phone" class="phone-input" placeholder="9xxxxxxxxx" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="customer-telegram">Telegram Username</label>
+        <input type="text" id="customer-telegram" placeholder="@username (optional)" />
+      </div>
+      <div class="form-group">
+        <label for="customer-location">Shipping Location*</label>
+        <input type="text" id="customer-location" required />
+      </div>
+    </fieldset>
+
+    <!-- Item Code -->
+    <fieldset class="form-section">
+      <legend>🧩 Item Code</legend>
+      <div class="item-code-box">
+        <input type="text" id="item-code" placeholder="Paste your item code here" required />
+        <button type="button" id="item-code-btn" onclick="pasteItemCode()">Paste</button>
+      </div>
+    </fieldset>
+
+    <!-- Payment Info -->
+    <fieldset class="form-section">
+      <legend>💳 Payment Details</legend>
+      <div class="form-group">
+        <label>Select Payment Method*</label>
+        <div class="copy-payment" onclick="copyPayment('09757077676', 'WavePay')">WavePay (09757077676 YWA)</div>
+        <div class="copy-payment" onclick="copyPayment('09428551557', 'KPay')">KPay (09428551557 YWA)</div>
+        <div class="copy-payment" onclick="copyPayment('09428551557', 'AyaPay')">AyaPay (09428551557 YWA)</div>
+        <input type="hidden" id="payment-method" required />
+        <div class="payment-copy-hint">Tap to copy number and select method</div>
+      </div>
+      <div class="form-group">
+        <label for="transaction-id">Transaction ID*</label>
+        <input type="text" id="transaction-id" required />
+      </div>
+    </fieldset>
+
+    <!-- Submit -->
+    <button type="submit" class="submit-btn" id="submitBtn">Place Order</button>
+  </form>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Processing your order...</div>
+</div>
+
+<!-- Thank You Modal -->
+<div class="thank-you-modal" id="thankYouModal">
+  <div class="thank-you-icon">✓</div>
+  <h2>Thank You for Your Order!</h2>
+  <p>Your order has been successfully placed. We'll contact you shortly.</p>
+  <p>Order ID: <span id="orderIdDisplay"></span></p>
+  <button class="thank-you-btn" onclick="closeThankYouModal()">Close</button>
+</div>
+
+<div id="toast" class="toast">Copied!</div>
+
+<script>
+  const botToken = "7092708310:AAGrdjABF7mkJUKHRClF-Se2zr7eFKPHwXA";
+  const chatId = "8019883647";
+  
+  // Generate a simple order ID
+  function generateOrderId() {
+    return 'LEGO-' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+  }
+
+  function copyPayment(number, methodName) {
+    navigator.clipboard.writeText(number).then(() => {
+      showToast(`Copied ${number}`);
+      document.getElementById("payment-method").value = methodName;
+    });
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2000);
+  }
+
+  function pasteItemCode() {
+    const itemCode = document.getElementById("item-code").value;
+    if (itemCode) {
+      showToast(`Item Code: ${itemCode} pasted successfully!`);
+    } else {
+      showToast("Please paste a valid item code.");
+    }
+  }
+  
+  function showLoading() {
+    document.getElementById("loadingOverlay").classList.add("active");
+  }
+  
+  function hideLoading() {
+    document.getElementById("loadingOverlay").classList.remove("active");
+  }
+  
+  function showThankYouModal(orderId) {
+    document.getElementById("orderIdDisplay").textContent = orderId;
+    document.getElementById("thankYouModal").classList.add("active");
+  }
+  
+  function closeThankYouModal() {
+    document.getElementById("thankYouModal").classList.remove("active");
+    document.getElementById("orderForm").reset();
+  }
+
+  document.getElementById("orderForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("submitBtn");
+    btn.classList.add("loading");
+    btn.innerText = "Processing...";
+    
+    // Show loading overlay
+    showLoading();
+    
+    // Generate order ID
+    const orderId = generateOrderId();
+
+    const order = {
+      name: document.getElementById("customer-name").value,
+      phone: document.getElementById("customer-phone").value,
+      telegram: document.getElementById("customer-telegram").value,
+      location: document.getElementById("customer-location").value,
+      itemCode: document.getElementById("item-code").value,
+      paymentMethod: document.getElementById("payment-method").value,
+      transactionId: document.getElementById("transaction-id").value,
+      date: new Date().toLocaleString(),
+      orderId: orderId
+    };
+
+    const telegramMessage = 
+`New Lego Order!
+
+🆔 Order ID: ${order.orderId}
+👤 Name: ${order.name}
+📞 Phone: +95${order.phone}
+📱 Telegram: ${order.telegram || 'Not provided'}
+📍 Location: ${order.location}
+🧩 Item Code: ${order.itemCode}
+💳 Paid via: ${order.paymentMethod}
+🆔 Transaction ID: ${order.transactionId}
+⏰ Time: ${order.date}`;
+
+    // Simulate processing delay (2 seconds)
+    setTimeout(() => {
+      fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: telegramMessage })
+      }).then(() => {
+        btn.classList.remove("loading");
+        btn.classList.add("success");
+        btn.innerText = "✓ Order Submitted!";
+        
+        // Hide loading overlay
+        hideLoading();
+        
+        // Show thank you modal
+        showThankYouModal(orderId);
+        
+        // Reset form after delay
+        setTimeout(() => {
+          btn.classList.remove("success");
+          btn.innerText = "Place Order";
+        }, 2000);
+      }).catch(err => {
+        showToast("Failed to send. Try again.");
+        console.error("Telegram Error:", err);
+        btn.classList.remove("loading");
+        btn.innerText = "Place Order";
+        hideLoading();
+      });
+    }, 2000);
+  });
+</script>
+
+</body>
+</html>

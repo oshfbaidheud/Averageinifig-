@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lego Shop | Minifigs Collection</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff5500;
+      --primary-dark: #e04b00;
+      --secondary: #2b2d42;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --success: #28a745;
+      --border-radius: 8px;
+      --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f5f5;
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 15px;
+    }
+    
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+    
+    .view-btn {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .view-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    /* Grid View */
+    .shop-container.grid-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+    
+    /* List View */
+    .shop-container.list-view {
+      display: block;
+    }
+    
+    .shop-container.list-view .shop-item {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    
+    .shop-container.list-view .shop-item img {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
+    }
+    
+    .shop-container.list-view .item-details {
+      flex: 1;
+      padding: 10px 15px;
+    }
+    
+    /* Shared Item Styles */
+    .shop-item {
+      background: white;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .shop-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .shop-item.selected {
+      border: 2px solid var(--primary);
+    }
+    
+    .shop-item img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .item-details {
+      padding: 12px;
+    }
+    
+    .item-details h3 {
+      font-size: 0.95rem;
+      margin-bottom: 3px;
+      color: var(--secondary);
+    }
+    
+    .item-details p {
+      color: var(--gray);
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+    }
+    
+    .item-code {
+      font-size: 0.75rem;
+      color: var(--gray);
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .copy-code {
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    
+    .item-price {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 5px;
+    }
+    
+    /* Checkout Button */
+    .checkout-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+      transform: translateY(100px);
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .checkout-btn.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .checkout-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--secondary);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: var(--transition);
+      box-shadow: var(--box-shadow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    
+    /* Solo View */
+    .solo-view {
+      display: none;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    
+    .solo-view.active {
+      display: block;
+    }
+    
+    .solo-view .shop-item {
+      margin-bottom: 20px;
+    }
+    
+    .solo-view .shop-item img {
+      height: 200px;
+    }
+    
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 15px;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .shop-container.grid-view {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="view-toggle">
+  <button class="view-btn grid-btn active" onclick="setView('grid')">
+    <i class="fas fa-th"></i>
+  </button>
+  <button class="view-btn list-btn" onclick="setView('list')">
+    <i class="fas fa-list"></i>
+  </button>
+</div>
+
+<!-- Grid/List View Container -->
+<div class="shop-container grid-view" id="shopContainer">
+  <!-- Item 1 -->
+  <div class="shop-item" onclick="selectItem('Superhero Minifig', 'AVM-001', 25000, this)">
+    <img src="https://images.unsplash.com/photo-1635070041078-e363dbe005cb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80" alt="Superhero Minifig" />
+    <div class="item-details">
+      <h3>Superhero Minifig</h3>
+      <p>Custom Lego Minifig</p>
+      <div class="item-code">
+        <span>Code: AVM-001</span>
+        <span class="copy-code" onclick="copyCode('AVM-001', event)">
+          <i class="far fa-copy"></i> Copy
+        </span>
+      </div>
+      <div class="item-price">25,000 MMK</div>
+    </div>
+  </div>
+
+  <!-- Item 2 -->
+  <div class="shop-item" onclick="selectItem('Fantasy Warrior Armor', 'AVM-002', 30000, this)">
+    <img src="https://images.unsplash.com/photo-1637858868790-1ad1a6f5d5ad?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80" alt="Fantasy Warrior Armor" />
+    <div class="item-details">
+      <h3>Fantasy Warrior Armor</h3>
+      <p>Fantasy Warrior Set</p>
+      <div class="item-code">
+        <span>Code: AVM-002</span>
+        <span class="copy-code" onclick="copyCode('AVM-002', event)">
+          <i class="far fa-copy"></i> Copy
+        </span>
+      </div>
+      <div class="item-price">30,000 MMK</div>
+    </div>
+  </div>
+
+  <!-- Item 3 -->
+  <div class="shop-item" onclick="selectItem('Business Executive Costume', 'AVM-003', 35000, this)">
+    <img src="https://images.unsplash.com/photo-1608889825271-9696287ab804?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80" alt="Business Executive Costume" />
+    <div class="item-details">
+      <h3>Business Executive</h3>
+      <p>Professional Minifig</p>
+      <div class="item-code">
+        <span>Code: AVM-003</span>
+        <span class="copy-code" onclick="copyCode('AVM-003', event)">
+          <i class="far fa-copy"></i> Copy
+        </span>
+      </div>
+      <div class="item-price">35,000 MMK</div>
+    </div>
+  </div>
+
+  <!-- Item 4 -->
+  <div class="shop-item" onclick="selectItem('Custom Design (Order)', 'AVM-004', 50000, this)">
+    <img src="https://images.unsplash.com/photo-1587654780291-39c9404d746b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=200&q=80" alt="Custom Design (Order)" />
+    <div class="item-details">
+      <h3>Custom Design</h3>
+      <p>Your custom order</p>
+      <div class="item-code">
+        <span>Code: AVM-004</span>
+        <span class="copy-code" onclick="copyCode('AVM-004', event)">
+          <i class="far fa-copy"></i> Copy
+        </span>
+      </div>
+      <div class="item-price">50,000 MMK</div>
+    </div>
+  </div>
+</div>
+
+<!-- Solo View Container -->
+<div class="solo-view" id="soloView">
+  <div class="back-btn" onclick="exitSoloView()">
+    <i class="fas fa-arrow-left"></i> Back to all items
+  </div>
+  <div id="soloItemContainer"></div>
+</div>
+
+<!-- Checkout Button -->
+<button class="checkout-btn" id="checkoutBtn" onclick="goToCheckout()">
+  <i class="fas fa-shopping-bag"></i> Checkout
+</button>
+
+<div id="toast" class="toast">
+  <i class="fas fa-check-circle"></i> Item selected!
+</div>
+
+<script>
+  let selectedItem = null;
+  let currentView = 'grid'; // 'grid', 'list', or 'solo'
+
+  function setView(view) {
+    currentView = view;
+    const container = document.getElementById('shopContainer');
+    const gridBtn = document.querySelector('.grid-btn');
+    const listBtn = document.querySelector('.list-btn');
+    
+    if (view === 'grid') {
+      container.className = 'shop-container grid-view';
+      gridBtn.classList.add('active');
+      listBtn.classList.remove('active');
+    } else if (view === 'list') {
+      container.className = 'shop-container list-view';
+      listBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+    }
+  }
+
+  function selectItem(name, code, price, element) {
+    // If in solo view mode, don't select - just show details
+    if (currentView !== 'solo') {
+      // Clear previous selection
+      const items = document.querySelectorAll('.shop-item');
+      items.forEach(item => item.classList.remove('selected'));
+      
+      // Mark the clicked item as selected
+      element.classList.add('selected');
+      
+      // Set selected item details
+      selectedItem = { name, code, price };
+      
+      // Show checkout button
+      document.getElementById('checkoutBtn').classList.add('show');
+      showToast(`<i class="fas fa-check-circle"></i> "${name}" selected`);
+    }
+    
+    // Show solo view
+    showSoloView(name, code, price, element.innerHTML);
+  }
+
+  function showSoloView(name, code, price, content) {
+    currentView = 'solo';
+    document.getElementById('shopContainer').style.display = 'none';
+    document.getElementById('soloView').classList.add('active');
+    
+    const soloContainer = document.getElementById('soloItemContainer');
+    soloContainer.innerHTML = `
+      <div class="shop-item selected">
+        ${content.split('item-details">')[0]}item-details">
+          <h3>${name}</h3>
+          <p>${code.includes('001') ? 'Custom Lego Minifig' : 
+             code.includes('002') ? 'Fantasy Warrior Set' : 
+             code.includes('003') ? 'Professional Minifig' : 
+             'Your custom order'}</p>
+          <div class="item-code">
+            <span>Code: ${code}</span>
+            <span class="copy-code" onclick="copyCode('${code}', event)">
+              <i class="far fa-copy"></i> Copy
+            </span>
+          </div>
+          <div class="item-price">${price.toLocaleString()} MMK</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function exitSoloView() {
+    currentView = 'grid';
+    document.getElementById('soloView').classList.remove('active');
+    document.getElementById('shopContainer').style.display = '';
+    setView('grid');
+  }
+
+  function copyCode(code, event) {
+    event.stopPropagation(); // Prevent triggering the item selection
+    navigator.clipboard.writeText(code);
+    showToast(`<i class="fas fa-copy"></i> Copied: ${code}`);
+  }
+
+  function goToCheckout() {
+    if (selectedItem) {
+      const url = `payment.html?product=${selectedItem.code}&price=${selectedItem.price}`;
+      window.location.href = url;
+    } else {
+      showToast(`<i class="fas fa-exclamation-circle"></i> Please select an item first`);
+    }
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById("toast");
+    toast.innerHTML = message;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+  }
+</script>
+
+</body>
+</html>
